@@ -38,19 +38,13 @@ public class Drivetrain {
 	private double kMinOutput = -1;
 	private double kMaxOutput = 1;
 
-	private double kP = 0.00039;
-	private double kI = 0;
+	private double kP = 6.0e-6;
+	private double kI = 1.0e-7;
 	private double kD = 0;
-	private double lKIS = 0;
-	private double lKFF = 0;
+	private double kIS = 0;
 
-	private double rKP = 0.00039;
-	private double rKI = 0;
-	private double rKIS = 0;
-	private double rKD = 0;
-	private double rKFF = 0;
-
-	private int debugMode;
+	private double lKFF = 1.78e-4;
+	private double rKFF = 1.71e-4;
 
 	// Robot characteristics
 	private double wheelSeparation = 2;
@@ -72,38 +66,33 @@ public class Drivetrain {
 		//rMotor2.follow(rMotor0);
 
 		// Setup up PID coefficients
-		lPidController.setP(lKP);
-		lPidController.setI(lKI);
-		lPidController.setD(lKD);
-		lPidController.setIZone(lKIS);
+		lPidController.setP(kP);
+		lPidController.setI(kI);
+		lPidController.setD(kD);
+		lPidController.setIZone(kIS);
 		lPidController.setFF(lKFF);
 		lPidController.setOutputRange(kMinOutput, kMaxOutput);
 
-		rPidController.setP(rKP);
-		rPidController.setI(rKI);
-		rPidController.setD(rKD);
-		rPidController.setIZone(rKIS);
+		rPidController.setP(kP);
+		rPidController.setI(kI);
+		rPidController.setD(kD);
+		rPidController.setIZone(kIS);
 		rPidController.setFF(rKFF);
 		rPidController.setOutputRange(kMinOutput, kMaxOutput);
 
 		// SmartDashboard configuration
 		SmartDashboard.putNumber("Robot Velocity", velocity);
 		
-		SmartDashboard.putNumber("Left P Gain", lKP);
-		SmartDashboard.putNumber("Left I Gain", lKI);
-		SmartDashboard.putNumber("Left D Gain", lKD);
-		SmartDashboard.putNumber("Left I Zone", lKIS);
-		SmartDashboard.putNumber("Left Feed Forward", lKFF);
+		SmartDashboard.putNumber("P Gain", kP);
+		SmartDashboard.putNumber("I Gain", kI);
+		SmartDashboard.putNumber("D Gain", kD);
+		SmartDashboard.putNumber("I Saturation", kIS);
 
-		SmartDashboard.putNumber("Right P Gain", rKP);
-		SmartDashboard.putNumber("Right I Gain", rKI);
-		SmartDashboard.putNumber("Right D Gain", rKD);
-		SmartDashboard.putNumber("Right I Zone", rKIS);
+		SmartDashboard.putNumber("Left Feed Forward", lKFF);
 		SmartDashboard.putNumber("Right Feed Forward", rKFF);
 
 		SmartDashboard.putNumber("Max Output", kMaxOutput);
 		SmartDashboard.putNumber("Min Output", kMinOutput);
-		SmartDashboard.putNumber("Debug Mode", debugMode);
 	}
 
 	// Setup initial state of the drivetrain
@@ -122,47 +111,41 @@ public class Drivetrain {
 	public void configureCoefficients() {
 		velocity = SmartDashboard.getNumber("Robot Velocity", 0);
 		
-		double lP = SmartDashboard.getNumber("Left P Gain", 0);
-		double lI = SmartDashboard.getNumber("Left I Gain", 0);
-		double lD = SmartDashboard.getNumber("Left D Gain", 0);
-		double lIS = SmartDashboard.getNumber("Left I Saturation", 0);
-		double lFF = SmartDashboard.getNumber("Left Feed Forward", 0);
+		double p = SmartDashboard.getNumber("P Gain", 0);
+		double i = SmartDashboard.getNumber("I Gain", 0);
+		double d = SmartDashboard.getNumber("D Gain", 0);
+		double iS = SmartDashboard.getNumber("I Saturation", 0);
 
-		double rP = SmartDashboard.getNumber("Right P Gain", 0);
-		double rI = SmartDashboard.getNumber("Right I Gain", 0);
-		double rD = SmartDashboard.getNumber("Right D Gain", 0);
-		double rIS = SmartDashboard.getNumber("Right I Saturation", 0);
+		double lFF = SmartDashboard.getNumber("Left Feed Forward", 0);
 		double rFF = SmartDashboard.getNumber("Right Feed Forward", 0);
 						
 		double max = SmartDashboard.getNumber("Max Output", 0);
 		double min = SmartDashboard.getNumber("Min Output", 0);
 
-		SmartDashboard.putNumber("Current Left Velocity", getCurrentLeftVelocity());
-		SmartDashboard.putNumber("Current Right Velocity", getCurrentRightVelocity());
+		SmartDashboard.putNumber("Graph Left Velocity", getCurrentLeftVelocity());
+		SmartDashboard.putNumber("Graph Right Velocity", getCurrentRightVelocity());
 
-		SmartDashboard.putNumber("Numerical Left Velocity", getCurrentLeftVelocity());
-		SmartDashboard.putNumber("Numerical Right Velocity", getCurrentRightVelocity());
+		SmartDashboard.putNumber("Left Velocity", getCurrentLeftVelocity());
+		SmartDashboard.putNumber("Right Velocity", getCurrentRightVelocity());
 
 		SmartDashboard.putNumber("Left PID Output", lMotor0.getAppliedOutput());
 		SmartDashboard.putNumber("Right PID Output", rMotor0.getAppliedOutput());
 
-		
-	
-		// If PID coefficients on SmartDashboard have changed, write new values to controller
-		if (lP != lKP) { lPidController.setP(lP); lKP = lP; }						
-		if (lI != lKI) { lPidController.setI(lI); lKI = lI; }
-		if (lD != lKD) { lPidController.setD(lD); lKD = lD; }			
-		if (lIS != lKIS) { lPidController.setIZone(lIS); lKIS = lIS; }
-		if (lFF != lKFF) { lPidController.setFF(lFF); lKFF = lFF; }
+		SmartDashboard.putString("Encoder Values", getEncoderValues());
 
-		if (rP != rKP) { rPidController.setP(rP); rKP = rP; }
-		if (rI != rKI) { rPidController.setI(rI); rKI = rI; }
-		if (rD != rKD) { rPidController.setD(rD); rKD = rD; }
-		if (rIS != rKIS) { rPidController.setIZone(rIS); rKIS = rIS;}
+
+		// If PID coefficients on SmartDashboard have changed, write new values to controller
+		if (p != kP) { lPidController.setP(p); rPidController.setP(p); kP = p; }						
+		if (i != kI) { lPidController.setI(i); rPidController.setI(i); kI = i; }
+		if (d != kD) { lPidController.setD(d); rPidController.setD(d); kD = d; }			
+		if (iS != kIS) { lPidController.setIZone(iS); lPidController.setIZone(iS); kIS = iS; }
+		
+		if (lFF != lKFF) { lPidController.setFF(lFF); lKFF = lFF; }
 		if (rFF != rKFF) { rPidController.setFF(rFF); rKFF = rFF; }
 						
 		if ((max != kMaxOutput) || (min != kMinOutput)) { 
-			lPidController.setOutputRange(min, max); 
+			lPidController.setOutputRange(min, max);
+			rPidController.setOutputRange(min, max); 
 			kMinOutput = min; kMaxOutput = max;
 		}
 	}
@@ -174,11 +157,8 @@ public class Drivetrain {
 
 	// Closed loop velocity based tank
 	public void closedLoopTank(double leftVelocity, double rightVelocity) {
+		configureCoefficients();
 		
-		if(SmartDashboard.getNumber("DebugMode", 0) > 0){
-			configureCoefficients();																			
-		}
-				
 		lPidController.setReference(leftVelocity, ControlType.kVelocity);
 		rPidController.setReference(-rightVelocity, ControlType.kVelocity);
 	}
@@ -190,8 +170,11 @@ public class Drivetrain {
 	}
 
 	// Output encoder values
-	public void getEncoderValues() {
-		System.out.println("LE: " + lEncoder.getPosition() + " RE: " + rEncoder.getPosition());
+	public String getEncoderValues() {
+		String str = "LE_Motor: " + lEncoder.getPosition() + " RE_Motor: " + rEncoder.getPosition();
+		str += "\nLE_Shaft: " + leftEncoder.get() + " RE_Shaft: " + rightEncoder.get();
+		
+		return str;
 	}
 
 	public double getVelocity() {
@@ -208,9 +191,7 @@ public class Drivetrain {
 
 	// Output PID values
 	public void getPIDValues() {
-		System.out.println("lKP: " + lKP + " lFF: " + lKFF);
-		System.out.println("rKP: " + rKP + " rFF: " + rKFF);
-
+		System.out.println("kP: " + kP + " kI: " + kI + " lFF: " + lKFF + " rFF: " + rKFF);
 	}
 
 	// Disable drivetrain
