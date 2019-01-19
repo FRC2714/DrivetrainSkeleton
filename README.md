@@ -1,8 +1,5 @@
-<b>FRC 2714 Public Competition Code</b>
+<b>FRC 2714 Drivetrain Skeleton</b>\
 
-Current Test Coverage of Master Branch: 70%
 Feel free to submit issues/feature requests to this repository!
 
-Configuration:
-3-Spark Max DriveTrain
-Motion Profiling on Spark Max
+A skeleton version of the drivebase used for testing and tuning the drivetrain.
