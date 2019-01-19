@@ -25,4 +25,8 @@ public class OI {
 	public double getRightJoystick() {
 		return xbox1.getRawAxis(4);
 	}
+
+	public OI() {
+		a.whileHeld(new setVelocity());
+	}
 }

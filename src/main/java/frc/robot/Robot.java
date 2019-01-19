@@ -42,13 +42,19 @@ public class Robot extends TimedRobot {
 	@Override
 	public void teleopPeriodic() {
 		Scheduler.getInstance().run();
+		
+		// Robot.drivetrain.closedLoopTank(500, 500);
 
+/*
 		// Arcade Drive
 		if (Math.abs(oi.getLeftJoystick()) > .05 || Math.abs(oi.getRightJoystick()) > .05) {
 			drivetrain.arcadeDrive(-oi.getLeftJoystick(), oi.getRightJoystick());
 		} else {
 			drivetrain.arcadeDrive(0, 0);
 		}
+*/
+		// Output encoder stuff
+		//drivetrain.getEncoderValues();
 	}
 
 	@Override

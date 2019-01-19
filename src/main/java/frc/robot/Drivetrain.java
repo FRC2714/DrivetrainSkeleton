@@ -16,10 +16,10 @@ public class Drivetrain {
 	// Drivetrain motors
 	private CANSparkMax lMotor0 = new CANSparkMax(0, MotorType.kBrushless);
 	private CANSparkMax lMotor1 = new CANSparkMax(1, MotorType.kBrushless);
-	private CANSparkMax lMotor2 = new CANSparkMax(2, MotorType.kBrushless);
+	//private CANSparkMax lMotor2 = new CANSparkMax(2, MotorType.kBrushless);
 	private CANSparkMax rMotor0 = new CANSparkMax(3, MotorType.kBrushless);
 	private CANSparkMax rMotor1 = new CANSparkMax(4, MotorType.kBrushless);
-	private CANSparkMax rMotor2 = new CANSparkMax(5, MotorType.kBrushless);
+	//private CANSparkMax rMotor2 = new CANSparkMax(5, MotorType.kBrushless);
 
 	// PID controllers
 	private CANPIDController lPidController = lMotor0.getPIDController();
@@ -33,20 +33,22 @@ public class Drivetrain {
 	private DifferentialDrive drive = new DifferentialDrive(lMotor0, rMotor0);
 
 	// PID coefficients
-	private double kMinOutput;
-	private double kMaxOutput;
+	private double velocity = 0;
+	
+	private double kMinOutput = -1;
+	private double kMaxOutput = 1;
 
-	private double lKP;
-	private double lKI;
-	private double lKIS;
-	private double lKD;
-	private double lKFF;
+	private double kP = 0.00039;
+	private double kI = 0;
+	private double kD = 0;
+	private double lKIS = 0;
+	private double lKFF = 0;
 
-	private double rKP;
-	private double rKI;
-	private double rKIS;
-	private double rKD;
-	private double rKFF;
+	private double rKP = 0.00039;
+	private double rKI = 0;
+	private double rKIS = 0;
+	private double rKD = 0;
+	private double rKFF = 0;
 
 	private int debugMode;
 
@@ -60,12 +62,14 @@ public class Drivetrain {
 
 	// Drivetrain initialization
 	public Drivetrain() {
+		
+		drive.setSafetyEnabled(false);
 
 		// Configure follow mode
 		lMotor1.follow(lMotor0);
-		lMotor2.follow(lMotor0);
+		//lMotor2.follow(lMotor0);
 		rMotor1.follow(rMotor0);
-		rMotor2.follow(rMotor0);
+		//rMotor2.follow(rMotor0);
 
 		// Setup up PID coefficients
 		lPidController.setP(lKP);
@@ -83,6 +87,8 @@ public class Drivetrain {
 		rPidController.setOutputRange(kMinOutput, kMaxOutput);
 
 		// SmartDashboard configuration
+		SmartDashboard.putNumber("Robot Velocity", velocity);
+		
 		SmartDashboard.putNumber("Left P Gain", lKP);
 		SmartDashboard.putNumber("Left I Gain", lKI);
 		SmartDashboard.putNumber("Left D Gain", lKD);
@@ -114,6 +120,8 @@ public class Drivetrain {
 
 	// Pull values from SmartDashboard
 	public void configureCoefficients() {
+		velocity = SmartDashboard.getNumber("Robot Velocity", 0);
+		
 		double lP = SmartDashboard.getNumber("Left P Gain", 0);
 		double lI = SmartDashboard.getNumber("Left I Gain", 0);
 		double lD = SmartDashboard.getNumber("Left D Gain", 0);
@@ -128,6 +136,17 @@ public class Drivetrain {
 						
 		double max = SmartDashboard.getNumber("Max Output", 0);
 		double min = SmartDashboard.getNumber("Min Output", 0);
+
+		SmartDashboard.putNumber("Current Left Velocity", getCurrentLeftVelocity());
+		SmartDashboard.putNumber("Current Right Velocity", getCurrentRightVelocity());
+
+		SmartDashboard.putNumber("Numerical Left Velocity", getCurrentLeftVelocity());
+		SmartDashboard.putNumber("Numerical Right Velocity", getCurrentRightVelocity());
+
+		SmartDashboard.putNumber("Left PID Output", lMotor0.getAppliedOutput());
+		SmartDashboard.putNumber("Right PID Output", rMotor0.getAppliedOutput());
+
+		
 	
 		// If PID coefficients on SmartDashboard have changed, write new values to controller
 		if (lP != lKP) { lPidController.setP(lP); lKP = lP; }						
@@ -161,7 +180,7 @@ public class Drivetrain {
 		}
 				
 		lPidController.setReference(leftVelocity, ControlType.kVelocity);
-		rPidController.setReference(rightVelocity, ControlType.kVelocity);
+		rPidController.setReference(-rightVelocity, ControlType.kVelocity);
 	}
 
 	// Closed loop arcade based tank
@@ -175,10 +194,29 @@ public class Drivetrain {
 		System.out.println("LE: " + lEncoder.getPosition() + " RE: " + rEncoder.getPosition());
 	}
 
+	public double getVelocity() {
+		return velocity;
+	}
+
+	public double getCurrentLeftVelocity() {
+		return lEncoder.getVelocity();
+	}
+
+	public double getCurrentRightVelocity() {
+		return -rEncoder.getVelocity();
+	}
+
+	// Output PID values
+	public void getPIDValues() {
+		System.out.println("lKP: " + lKP + " lFF: " + lKFF);
+		System.out.println("rKP: " + rKP + " rFF: " + rKFF);
+
+	}
+
 	// Disable drivetrain
 	public void drivetrainDestruct() {
-		lMotor0.setIdleMode(CANSparkMax.IdleMode.kBrake);
-		rMotor0.setIdleMode(CANSparkMax.IdleMode.kBrake);
+		// lMotor0.setIdleMode(CANSparkMax.IdleMode.kBrake);
+		// rMotor0.setIdleMode(CANSparkMax.IdleMode.kBrake);
 
 		lMotor0.set(0);
 		rMotor0.set(0);
