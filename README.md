@@ -1,4 +1,4 @@
-<b>FRC 2714 Drivetrain Skeleton</b>\
+<b>FRC 2714 Drivetrain Skeleton</b>
 
 Feel free to submit issues/feature requests to this repository!
 
