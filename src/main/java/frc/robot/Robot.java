@@ -2,21 +2,34 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import frc.robot.util.ControlsProcessor;
 
 public class Robot extends TimedRobot {
 
 	public static final Drivetrain drivetrain = new Drivetrain();
-	public static OI oi;
+	public static Object util;
+
+	public ControlsProcessor ControlsProcessor;
 
 	@Override
 	public void robotInit() {
-		oi = new OI();
-		drivetrain.drivetrainInit();
+			
+		ControlsProcessor = new ControlsProcessor(500000, 1) {
+			@Override
+			public void registerOperatorControls() {
+				append("test_spline", this.a);
+			}
+		};
+
+		ControlsProcessor.registerController("DriveTrain", drivetrain);
+
+		ControlsProcessor.start();
+		drivetrain.init();
 	}
 
 	@Override
 	public void disabledInit() {
-		drivetrain.drivetrainDestruct();
+		drivetrain.destruct();
 	}
 
 	@Override
@@ -65,6 +78,6 @@ public class Robot extends TimedRobot {
 	public void testPeriodic() { }
 
 	private void generalInit() {
-		drivetrain.drivetrainInit();
+		drivetrain.init();
 	}
 }
