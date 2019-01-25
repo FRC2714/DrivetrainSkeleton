@@ -22,10 +22,10 @@ public class Drivetrain extends SubsystemModule {
 	// Drivetrain motors
 	private CANSparkMax lMotor0 = new CANSparkMax(0, MotorType.kBrushless);
 	private CANSparkMax lMotor1 = new CANSparkMax(1, MotorType.kBrushless);
-	//private CANSparkMax lMotor2 = new CANSparkMax(2, MotorType.kBrushless);
+	private CANSparkMax lMotor2 = new CANSparkMax(2, MotorType.kBrushless);
 	private CANSparkMax rMotor0 = new CANSparkMax(3, MotorType.kBrushless);
 	private CANSparkMax rMotor1 = new CANSparkMax(4, MotorType.kBrushless);
-	//private CANSparkMax rMotor2 = new CANSparkMax(5, MotorType.kBrushless);
+	private CANSparkMax rMotor2 = new CANSparkMax(5, MotorType.kBrushless);
 
 	// PID controllers
 	private CANPIDController lPidController = lMotor0.getPIDController();
@@ -44,16 +44,16 @@ public class Drivetrain extends SubsystemModule {
 	// PID coefficients
 	private double velocity = 0;
 	
-	private double kMinOutput = -1;
-	private double kMaxOutput = 1;
+    private final double kMinOutput = -1;
+	private final double kMaxOutput = 1;
 
-	private double kP = 6.0e-6;
-	private double kI = 1.0e-7;
-	private double kD = 0;
-	private double kIS = 0;
+	private final double kP = 4.8e-5;
+	private final double kI = 5.0e-7;
+	private final double kD = 0.0;
+	private final double kIS = 0.0;
 
-	private double lKFF = 1.78e-4;
-	private double rKFF = 1.71e-4;
+	private final double lKFF = 1.77e-4;
+	private final double rKFF = 1.78e-4;
 
 	// Spline values
 	private double x1 = 0;
@@ -75,7 +75,8 @@ public class Drivetrain extends SubsystemModule {
 
 
 	// Robot characteristics
-	private double wheelSeparation = 2;
+	private final double wheelSeparation = 2;
+	private final double conversionFactor = 0;
 
 	// Gearbox encoders
 	private Encoder leftEncoder = new Encoder(RobotMap.p_leftEncoderA, RobotMap.p_leftEncoderB, true, EncodingType.k4X);
@@ -90,11 +91,11 @@ public class Drivetrain extends SubsystemModule {
 
 		// Configure follow mode
 		lMotor1.follow(lMotor0);
-		//lMotor2.follow(lMotor0);
+		lMotor2.follow(lMotor0);
 		rMotor1.follow(rMotor0);
-		//rMotor2.follow(rMotor0);
+		rMotor2.follow(rMotor0);
 
-		// Setup up PID coefficients
+		// Configure PID Coefficients
 		lPidController.setP(kP);
 		lPidController.setI(kI);
 		lPidController.setD(kD);
@@ -108,20 +109,6 @@ public class Drivetrain extends SubsystemModule {
 		rPidController.setIZone(kIS);
 		rPidController.setFF(rKFF);
 		rPidController.setOutputRange(kMinOutput, kMaxOutput);
-
-		// SmartDashboard configuration
-		SmartDashboard.putNumber("Robot Velocity", velocity);
-		
-		SmartDashboard.putNumber("P Gain", kP);
-		SmartDashboard.putNumber("I Gain", kI);
-		SmartDashboard.putNumber("D Gain", kD);
-		SmartDashboard.putNumber("I Saturation", kIS);
-
-		SmartDashboard.putNumber("Left Feed Forward", lKFF);
-		SmartDashboard.putNumber("Right Feed Forward", rKFF);
-
-		SmartDashboard.putNumber("Max Output", kMaxOutput);
-		SmartDashboard.putNumber("Min Output", kMinOutput);
 
 		// For splines
 		SmartDashboard.putNumber("x1", x1);
@@ -193,49 +180,6 @@ public class Drivetrain extends SubsystemModule {
 		rMotor0.setIdleMode(CANSparkMax.IdleMode.kCoast);
 	}
 
-	// Pull values from SmartDashboard
-	public void configureCoefficients() {
-		velocity = SmartDashboard.getNumber("Robot Velocity", 0);
-		
-		double p = SmartDashboard.getNumber("P Gain", 0);
-		double i = SmartDashboard.getNumber("I Gain", 0);
-		double d = SmartDashboard.getNumber("D Gain", 0);
-		double iS = SmartDashboard.getNumber("I Saturation", 0);
-
-		double lFF = SmartDashboard.getNumber("Left Feed Forward", 0);
-		double rFF = SmartDashboard.getNumber("Right Feed Forward", 0);
-						
-		double max = SmartDashboard.getNumber("Max Output", 0);
-		double min = SmartDashboard.getNumber("Min Output", 0);
-
-		SmartDashboard.putNumber("Graph Left Velocity", getCurrentLeftVelocity());
-		SmartDashboard.putNumber("Graph Right Velocity", getCurrentRightVelocity());
-
-		SmartDashboard.putNumber("Left Velocity", getCurrentLeftVelocity());
-		SmartDashboard.putNumber("Right Velocity", getCurrentRightVelocity());
-
-		SmartDashboard.putNumber("Left PID Output", lMotor0.getAppliedOutput());
-		SmartDashboard.putNumber("Right PID Output", rMotor0.getAppliedOutput());
-
-		SmartDashboard.putString("Encoder Values", getEncoderValues());
-		SmartDashboard.putNumber("NavX Heading: ", navX.getFusedHeading());
-
-		// If PID coefficients on SmartDashboard have changed, write new values to controller
-		if (p != kP) { lPidController.setP(p); rPidController.setP(p); kP = p; }						
-		if (i != kI) { lPidController.setI(i); rPidController.setI(i); kI = i; }
-		if (d != kD) { lPidController.setD(d); rPidController.setD(d); kD = d; }			
-		if (iS != kIS) { lPidController.setIZone(iS); lPidController.setIZone(iS); kIS = iS; }
-		
-		if (lFF != lKFF) { lPidController.setFF(lFF); lKFF = lFF; }
-		if (rFF != rKFF) { rPidController.setFF(rFF); rKFF = rFF; }
-						
-		if ((max != kMaxOutput) || (min != kMinOutput)) { 
-			lPidController.setOutputRange(min, max);
-			rPidController.setOutputRange(min, max); 
-			kMinOutput = min; kMaxOutput = max;
-		}
-	}
-
 	public void setSplineValues() {
 		SmartDashboard.getNumber("x1", 0);
 		SmartDashboard.getNumber("x2", 0);
@@ -262,8 +206,6 @@ public class Drivetrain extends SubsystemModule {
 
 	// Closed loop velocity based tank
 	public void closedLoopTank(double leftVelocity, double rightVelocity) {
-		configureCoefficients();
-		
 		lPidController.setReference(leftVelocity, ControlType.kVelocity);
 		rPidController.setReference(-rightVelocity, ControlType.kVelocity);
 	}
